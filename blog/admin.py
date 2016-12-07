@@ -1,7 +1,14 @@
 from django.contrib import admin
-from .models import Post, Author, Category, Tag
+from . import models
+from django_markdown.admin import MarkdownModelAdmin
+from django_markdown.widgets import AdminMarkdownWidget
+from django.db.models import TextField
 
-admin.site.register(Post)
-admin.site.register(Author)
-admin.site.register(Tag)
-admin.site.register(Category)
+
+class EntryAdmin(MarkdownModelAdmin):
+    list_display = ("title", "created")
+    prepopulated_fields = {"slug": ("title",)}
+    formfield_overrides = {TextField: {'widget': AdminMarkdownWidget}}
+
+admin.site.register(models.Entry, EntryAdmin)
+admin.site.register(models.Tag)

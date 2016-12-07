@@ -1,41 +1,37 @@
 from django.db import models
+from django.core.urlresolvers import reverse
 
-
-class Author(models.Model): #Defines the Author
-	name = models.CharField(max_length = 50)
-	email = models.EmailField(unique=True)
-	bio = models.TextField()
-
-	def __str__(self):
-		return self.name
-
-class Category(models.Model):
-	cat_name = models.CharField('category name',max_length = 50)
-	cat_description = models.CharField('category description',max_length = 250)
-
-
-	class Meta:
-		verbose_name_plural = 'Categories'
-
-	def __str__(self):
-		return self.cat_name
 
 class Tag(models.Model):
-	tag_name = models.CharField(max_length = 50)
-	tag_description = models.CharField(max_length = 250)
+    slug = models.SlugField(max_length=200, unique=True)
 
-	def __str__(self):
-		return self.tag_name
+    def __str__(self):
+        return self.slug
 
 
-class Post(models.Model): #Defines the post and its attributes
-	title = models.CharField(max_length=200)
-	body = models.TextField()
-	created_date = models.DateTimeField(auto_now_add = True, auto_now = False)
-	updated_date = models.DateTimeField(auto_now_add = False, auto_now = True)
-	author = models.ForeignKey(Author)
-	categories = models.ManyToManyField(Category)
-	tags = models.ManyToManyField(Tag)
+class EntryQuerySet(models.QuerySet):
+    def published(self):
+        return self.filter(publish=True)
 
-	def __str__(self):
-		return self.title
+
+class Entry(models.Model):
+    title = models.CharField(max_length=200)
+    body = models.TextField()
+    slug = models.SlugField(max_length=200, unique=True)
+    publish = models.BooleanField(default=True)
+    created = models.DateTimeField(auto_now_add=True)
+    modified = models.DateTimeField(auto_now=True)
+    tags = models.ManyToManyField(Tag)
+
+    objects = EntryQuerySet.as_manager()
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse("entry_detail", kwargs={"slug": self.slug})
+
+    class Meta:
+        verbose_name = "Blog Entry"
+        verbose_name_plural = "Blog Entries"
+        ordering = ["-created"]
